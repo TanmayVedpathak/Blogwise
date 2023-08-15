@@ -38,8 +38,6 @@ app.use("/api/v1/posts", postsRoutes);
 // comments route
 app.use("/api/v1/comments", commentsRoutes);
 
-// 2. routes
-
 // 3. error handling middleware
 app.use(globalErrHandler);
 
