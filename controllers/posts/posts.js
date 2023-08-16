@@ -1,3 +1,4 @@
+const Comment = require("../../model/comment/Comment");
 const Post = require("../../model/post/Post");
 const User = require("../../model/user/User");
 const appErr = require("../../utils/appErr");
@@ -41,7 +42,12 @@ const createPostCtrl = async (req, res, next) => {
 // get posts
 const fetchPostsCtrl = async (req, res, next) => {
   try {
-    const postsList = await Post.find();
+    const postsList = await Post.find().populate("comments");
+
+    if (!postsList) {
+      return next(appErr("Posts not found"));
+    }
+
     res.json({
       status: "success",
       message: "Posts List",
@@ -55,8 +61,14 @@ const fetchPostsCtrl = async (req, res, next) => {
 // get posts based on query
 const fetchQueryPostsCtrl = async (req, res, next) => {
   try {
-    console.log("req.query", req.query);
-    const postsList = await Post.find({ category: req.query.category });
+    const postsList = await Post.find({
+      category: req.query.category,
+    }).populate("comments");
+
+    if (!postsList) {
+      return next(appErr("Posts not found"));
+    }
+
     res.json({
       status: "success",
       message: "Posts List",
@@ -74,7 +86,12 @@ const fetchSinglePostCtrl = async (req, res, next) => {
     const id = req.params.id;
 
     // find the post
-    const post = await Post.findById(id);
+    const post = await Post.findById(id).populate("comments");
+
+    if (!post) {
+      return next(appErr("Post not found"));
+    }
+
     res.json({
       status: "success",
       message: "Post details",
@@ -91,10 +108,31 @@ const deletePostCtrl = async (req, res, next) => {
     // find the post
     const post = await Post.findById(req.params.id);
 
+    if (!post) {
+      return next(appErr("Post not found"));
+    }
+
     // check if post belongs to the user
     if (post.user.toString() !== req.session.userAuth.toString()) {
       return next(appErr("You are not allowed to delete this post", 403));
     }
+
+    // delete post from user
+    const updatedUser = await User.findByIdAndUpdate(
+      req.session.userAuth.toString(),
+      {
+        $pull: { posts: post._id },
+      },
+      {
+        new: true,
+      }
+    );
+
+    // delete post comments from user
+    await User.deleteMany({ comments: { $in: post.comments } });
+
+    // delete post comments from comment
+    await Comment.deleteMany({ _id: { $in: post.comments } });
 
     // delete post
     await Post.findByIdAndDelete(req.params.id);
@@ -113,6 +151,10 @@ const updatePostCtrl = async (req, res, next) => {
   try {
     // find the post
     const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return next(appErr("Post not found"));
+    }
 
     // check if post belongs to the user
     if (post.user.toString() !== req.session.userAuth.toString()) {
