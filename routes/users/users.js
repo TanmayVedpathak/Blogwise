@@ -19,6 +19,46 @@ const userRoutes = express.Router();
 // instance of multer
 const upload = multer({ storage });
 
+// login
+userRoutes.get("/login", (req, res) => {
+  res.render("users/login", {
+    error: "",
+  });
+});
+
+// register
+userRoutes.get("/register", (req, res) => {
+  res.render("users/register", {
+    error: "",
+  });
+});
+
+// profile
+// userRoutes.get("/profile-page", (req, res) => {
+//   res.render("users/profile");
+// });
+
+// upload profile photo
+userRoutes.get("/upload-profile-photo-form", (req, res) => {
+  res.render("users/uploadProfilePhoto", {
+    error: "",
+  });
+});
+
+// upload cover photo
+userRoutes.get("/upload-cover-photo-form", (req, res) => {
+  res.render("users/uploadCoverPhoto", {
+    error: "",
+  });
+});
+
+// update user
+userRoutes.get("/update-user-password", (req, res) => {
+  res.render("users/updatePassword", {
+    error: "",
+  });
+});
+
 // POST /api/v1/users/register
 userRoutes.post("/register", registerCtrl);
 
@@ -29,7 +69,7 @@ userRoutes.post("/login", loginCtrl);
 userRoutes.get("/logout", protected, logoutCtrl);
 
 // GET /api/v1/users/profile
-userRoutes.get("/profile", protected, profileCtrl);
+userRoutes.get("/profile-page", protected, profileCtrl);
 
 // PUT /api/v1/users/profile-image-upload
 userRoutes.put(
@@ -48,12 +88,12 @@ userRoutes.put(
 );
 
 // PUT /api/v1/users/update-password/:id
-userRoutes.put("/update-password/:id", passwordCtrl);
+userRoutes.put("/update-password", protected, passwordCtrl);
 
 //PUT/api/v1/users/update/:id
-userRoutes.put("/update/:id", updateUserCtrl);
+userRoutes.put("/update", protected, updateUserCtrl);
 
 // GET /api/v1/users/:id
-userRoutes.get("/:id", userDetailsCtrl);
+userRoutes.get("/:id", protected, userDetailsCtrl);
 
 module.exports = userRoutes;
